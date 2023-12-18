@@ -1,5 +1,5 @@
 obj/
 GeoIP2-City.mmdb
-GeoIP2-City2.mmdb	#Don't ask.
-./geoconn
+GeoIP2-City2.mmdb
+geoconn
 imgui.ini

@@ -53,7 +53,7 @@ void map_window::init(){
 }
 
 void map_window::zoom_in(float aspect_ratio){
-	const float ZOOM_AMOUNT_X = map_width / 240;
+	const float ZOOM_AMOUNT_X = map_width / 80;
 	const float ZOOM_AMOUNT_Y = (1 / aspect_ratio) * ZOOM_AMOUNT_X;
 
 	if(view_width >= map_width / 20 && view_height >= map_height / 20){
@@ -148,7 +148,7 @@ void map_window::render_background(){
 		}
 	}
 
-	if(ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenOverlapped)){
+	if(ImGui::IsWindowHovered()){
 		if(io.MouseWheel > 0){
 			if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
 				zoom_in(aspect_ratio);
@@ -166,10 +166,10 @@ void map_window::render_background(){
 			}
 		}
 		if(io.MouseWheelH > 0 && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
-			scroll_left(aspect_ratio);
+			scroll_right(aspect_ratio);
 		}
 		if(io.MouseWheelH < 0 && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
-			scroll_right(aspect_ratio);
+			scroll_left(aspect_ratio);
 		}
 	}
 
@@ -238,14 +238,17 @@ void map_window::render_nodes(){
     window_pos.y += 25;
 	//ImGui::SetNextWindowPos(window_pos);
 	//ImGui::SetCursorPos(window_pos);
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+	//ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiChildFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+	ImGuiChildFlags child_flags = ImGuiChildFlags_AlwaysAutoResize;
 	ImGui::SetCursorScreenPos(window_pos);
-	ImGui::BeginChild("scrolling", ImVec2(100, 100), false, window_flags);
+	//ImGui::BeginChild("scrolling", ImVec2(100, 100), false, child_flags);
+	ImGui::BeginChild("name", ImVec2(-FLT_MIN, 0.0f), ImGuiWindowFlags_NoMove);
 	ImGui::Image((void*)(intptr_t)node_texture, ImVec2(node_width, node_height), ImVec2(0, 0), ImVec2(1, 1));
 	ImGui::EndChild();
 }
 
 void map_window::render(){
+	ImGui::SetNextWindowSize(ImVec2(700, 700));
 	ImGui::Begin("Map", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
 	render_background();
 
