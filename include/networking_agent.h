@@ -22,6 +22,7 @@ class networking_agent{
 		int check_for_incoming_connections();
 		int check_for_messages(ip_database& ip_db, std::vector<struct connection>& active_connections);
 		int request_ips();
+		unsigned int num_data_sources();
 	private:
 		int server_sock;
 		unsigned long long seq_client_id;

@@ -131,7 +131,9 @@ void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd){
 geolocation::geolocation(){
 	dbgprint("Opening GeoLite2-City-Blocks-IPv4.csv...\n");
 	FILE* fdv4 = fopen("GeoLite2-City-Blocks-IPv4.csv", "r");
+	//FILE* fdv4 = fopen("debug4.csv", "r");
 	if(fdv4 == 0){
+		dbgprint("Could not open geolocation database.");
 		exit(1);
 	}
 
@@ -141,7 +143,9 @@ geolocation::geolocation(){
 
 	dbgprint("Opening GeoLite2-City-Blocks-IPv6.csv...\n");
 	FILE* fdv6 = fopen("GeoLite2-City-Blocks-IPv6.csv", "r");
+	//FILE* fdv6 = fopen("debug6.csv", "r");
 	if(fdv6 == 0){
+		dbgprint("Could not open geolocation database.");
 		exit(1);
 	}
 

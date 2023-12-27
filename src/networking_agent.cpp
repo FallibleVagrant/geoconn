@@ -185,14 +185,18 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 				return 0;
 			}
 
-			//The connection is erroring out!
-			//Punt it to caller.
-			return -2;
+			//If for any other reason the client is erroring out,
+			//just close the connection.
+			rem_client_by_index(i);
+			i--;
+			continue;
 		}
 
 		//Connection was closed.
 		if(num_bytes == 0){
-			return -2;
+			rem_client_by_index(i);
+			i--;
+			continue;
 		}
 
 		buf[BUFLEN - 1] = '\0';
@@ -258,6 +262,84 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 	return 0;
 }
 
+#define DEFAULT_REQ_PORT "40344"
+
 int networking_agent::request_ips(){
+	int client_sock;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+
+	//Use the loopback address because node is NULL and AI_PASSIVE isn't specified.
+	//Cf. man page of getaddrinfo().
+	//hints.ai_flags = AI_PASSIVE;
+	
+	const char* port = DEFAULT_REQ_PORT;
+	
+	struct addrinfo* servinfo;
+	struct addrinfo* p;
+	int r;
+	if((r = getaddrinfo(NULL, port, &hints, &servinfo)) != 0){
+		dbgprint("[NET_RECEIVER] getaddrinfo() returned err: %s\n", gai_strerror(r));
+		return -1;
+	}
+
+	//Loop through all the results and connect to the first we can.
+	for(p = servinfo; p != NULL; p = p->ai_next){
+		if((client_sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1){
+			dbgprint("[DEBUG] Couldn't get a socket for some reason.\n");
+			continue;
+		}
+
+		/*
+		//Set to non-blocking.
+		if(fcntl(client_sock, F_SETFL, O_NONBLOCK) == -1){
+			dbgprint("[NET_RECEIVER] couldn't set socket to non-blocking for some reason.\n");
+			return -1;
+		}
+		*/
+
+		if(connect(client_sock, p->ai_addr, p->ai_addrlen) == -1){
+			dbgprint("[DEBUG] Couldn't connect() for some reason.\n");
+			close(client_sock);
+			continue;
+		}
+
+		break;
+	}
+
+	if(p == NULL){
+		dbgprint("[NET_RECEIVER] Failed to connect.\n");
+		return -1;
+	}
+
+	//Set to non-blocking.
+	if(fcntl(client_sock, F_SETFL, O_NONBLOCK) == -1){
+		dbgprint("[NET_RECEIVER] couldn't set socket to non-blocking for some reason.\n");
+		close(client_sock);
+		return -1;
+	}
+
+	dbgprint("Selected ai_family: %d\nSelected ai_socktype: %d\nSelected ai_protocol: %d\n", p->ai_family, p->ai_socktype, p->ai_protocol);
+	char s[INET6_ADDRSTRLEN];
+	inet_ntop(p->ai_family, get_in_addr((struct sockaddr*)p->ai_addr), s, sizeof(s));
+	dbgprint("Connected to: %s", s);
+
+	freeaddrinfo(servinfo);
+
+	//Send a notice that we want IPs.
+	int num_bytes;
+	const char* buf = "REQ IP localhost 40343";
+	if((num_bytes = send(client_sock, buf, strlen(buf), 0)) == -1){
+		close(client_sock);
+		return -1;
+	}
+
+	close(client_sock);
 	return 0;
+}
+
+unsigned int networking_agent::num_data_sources(){
+	return clients.size();
 }

@@ -18,7 +18,7 @@ namespace geoconn{
 	bool show_datalinks_window = true;
 	bool show_ips_window = true;
 
-	bool trying_to_connect = false;
+	bool sending_request = false;
 
 	datalinks_window datalinks_win;
 	ips_window ips_win;
@@ -33,6 +33,7 @@ namespace geoconn{
 
 	void setup(){
 		map_win.init();
+		net_agent.init();
 	}
 
 	void renderUI(){
@@ -57,7 +58,7 @@ namespace geoconn{
     	}
 
 		if(show_datalinks_window){
-			datalinks_win.render(trying_to_connect);
+			datalinks_win.render(sending_request, net_agent.num_data_sources());
 		}
 
 		if(show_ips_window){
@@ -68,12 +69,12 @@ namespace geoconn{
 			map_win.render(ip_db, selected_ip);
 		}
 
-		if(trying_to_connect){
-			int r = net_agent.init();
+		if(sending_request){
+			int r = net_agent.request_ips();
 			if(r == -1){
 				;
 			}
-			trying_to_connect = false;
+			sending_request = false;
 		}
 	}
 }
