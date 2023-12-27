@@ -9,8 +9,10 @@
 #include "datalinks_window.h"
 #include "ips_window.h"
 #include "map_window.h"
-#include "networking_receiver.h"
+#include "networking_agent.h"
 #include "common.h"
+
+FILE* error_log = stderr;
 
 namespace geoconn{
 	bool show_datalinks_window = true;
@@ -22,7 +24,7 @@ namespace geoconn{
 	ips_window ips_win;
 	map_window map_win;
 
-	networking_receiver net_receiver;
+	networking_agent net_agent;
 
 	ip_database ip_db;
 	std::vector<struct connection> active_connections;
@@ -35,7 +37,8 @@ namespace geoconn{
 
 	void renderUI(){
 		ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-		net_receiver.check_for_messages(ip_db, active_connections);
+		net_agent.check_for_incoming_connections();
+		net_agent.check_for_messages(ip_db, active_connections);
 		ImGui::ShowDemoWindow();
 
 		if(ImGui::BeginMainMenuBar()){
@@ -44,6 +47,12 @@ namespace geoconn{
 				if(ImGui::MenuItem("IPs", NULL, &show_ips_window)){}
 				ImGui::EndMenu();
 			}
+			/*
+			if(ImGUi::BeginMenu("Visualizer")){
+				//if(ImGui::MenuItem("N/A for now. single selection or options subwindow?", NULL, )){}
+				ImGui::EndMenu();
+			}
+			*/
 			ImGui::EndMainMenuBar();
     	}
 
@@ -60,7 +69,7 @@ namespace geoconn{
 		}
 
 		if(trying_to_connect){
-			int r = net_receiver.init();
+			int r = net_agent.init();
 			if(r == -1){
 				;
 			}
