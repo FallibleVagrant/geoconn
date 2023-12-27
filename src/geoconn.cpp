@@ -1,3 +1,7 @@
+//Note to self.
+//Maybe do more visualizations?
+//Instead of lat & long projected onto map,
+//we can project latency and throughput onto the xy plane.
 #include "geoconn.h"
 
 #include "imgui.h"
@@ -23,6 +27,8 @@ namespace geoconn{
 	ip_database ip_db;
 	std::vector<struct connection> active_connections;
 
+	unsigned int selected_ip = 0;
+
 	void setup(){
 		map_win.init();
 	}
@@ -46,11 +52,11 @@ namespace geoconn{
 		}
 
 		if(show_ips_window){
-			ips_win.render(ip_db);
+			ips_win.render(ip_db, selected_ip);
 		}
 
 		if(true){
-			map_win.render();
+			map_win.render(ip_db, selected_ip);
 		}
 
 		if(trying_to_connect){

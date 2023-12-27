@@ -1,8 +1,8 @@
 #include "ip_database.h"
 
-ip_database::ip_database(){
+#include <stdlib.h>
 
-}
+ip_database::ip_database(){}
 
 ip_database::~ip_database(){
 	//TODO: free this structure!
@@ -37,6 +37,13 @@ void ip_database::insert(sockaddr_storage ss){
 
 	struct ip_entry ipe;
 	ipe.ss = ss;
+	ipe.lat = 0;
+	ipe.lon = 0;
+
+	int r = geo.geolocate(ss, &(ipe.lat), &(ipe.lon));
+	if(r == 0){
+		dbgprint("Could not resolve addr.\n");
+	}
 
 	db.push_back(ipe);
 }
@@ -70,6 +77,6 @@ bool ip_database::contains(sockaddr_storage ss){
 	return false;
 }
 
-std::vector<struct ip_entry>& ip_database::get_db(){
+std::vector<struct ip_entry> ip_database::get_db(){
 	return db;
 }

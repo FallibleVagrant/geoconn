@@ -12,6 +12,9 @@
 #include <SDL_opengl.h>
 #endif
 
+#include <vector>
+#include "ip_database.h"
+
 struct coordinates;
 
 class map_window{
@@ -20,7 +23,7 @@ class map_window{
 		~map_window();
 
 		void init();
-		void render();
+		void render(ip_database& ip_db, unsigned int& selected_ip);
 		GLuint map_texture = 0;
 		int map_width, map_height;
 		float view_x, view_y;
@@ -38,7 +41,7 @@ class map_window{
 
 		void render_background();
 		ImVec2 coords_to_equirectangular(struct coordinates coord);
-		void render_nodes();
+		void render_nodes(std::vector<struct ip_entry>& db, unsigned int& selected_ip);
 };
 
 #endif

@@ -8,9 +8,8 @@ class ips_window{
 		ips_window();
 		~ips_window();
 
-		void render(ip_database& ip_db);
+		void render(ip_database& ip_db, unsigned int& selected_ip);
 	private:
-		unsigned int selected_ip;
 };
 
 #endif

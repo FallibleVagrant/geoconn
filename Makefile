@@ -18,7 +18,7 @@ EXE = geoconn
 IMGUI_DIR = ./src/imgui
 SRC_DIR = ./src
 OBJ_DIR = ./obj
-SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/geoconn.cpp $(SRC_DIR)/networking_receiver.cpp $(SRC_DIR)/datalinks_window.cpp $(SRC_DIR)/ip_database.cpp $(SRC_DIR)/ips_window.cpp $(SRC_DIR)/map_window.cpp
+SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/geoconn.cpp $(SRC_DIR)/networking_receiver.cpp $(SRC_DIR)/datalinks_window.cpp $(SRC_DIR)/ip_database.cpp $(SRC_DIR)/ips_window.cpp $(SRC_DIR)/map_window.cpp $(SRC_DIR)/geolocation.cpp
 SOURCES += $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_demo.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_sdl2.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
@@ -75,6 +75,9 @@ endif
 ##---------------------------------------------------------------------
 
 $(OBJ_DIR)/%.o:$(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJ_DIR)/%.o:$(SRC_DIR)/%.c
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJ_DIR)/%.o:$(IMGUI_DIR)/%.cpp

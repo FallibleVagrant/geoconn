@@ -18,7 +18,7 @@ static void* get_in_addr(struct sockaddr* sa){
 }
 #include "debug.h"
 #include <stdlib.h>
-void ips_window::render(ip_database& ip_db){
+void ips_window::render(ip_database& ip_db, unsigned int& selected_ip){
 	std::vector<struct ip_entry> db = ip_db.get_db();
 
 	ImGui::SetNextWindowSizeConstraints(ImVec2(400, 300), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100

@@ -3,3 +3,6 @@ GeoIP2-City.mmdb
 GeoIP2-City2.mmdb
 geoconn
 imgui.ini
+GeoLite2-City-Blocks-IPv4.csv
+GeoLite2-City-Blocks-IPv6.csv
+GeoLite2-City-Locations-en.csv
