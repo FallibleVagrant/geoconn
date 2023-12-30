@@ -4,7 +4,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-map_window::map_window(){}
+map_window::map_window(geolocation& g) : geo(g){
+	geo.get_database_file_lengths(ipv4db_filelength, ipv6db_filelength);
+	view_width = 700;
+	view_height = 700;
+}
 
 map_window::~map_window(){}
 
@@ -39,16 +43,20 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
     return true;
 }
 
+void init_textures(float& map_texture, float& map_width){
+
+}
+
 void map_window::init(){
 	//Load the map. Cf.:
 	//https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
 	bool ret = LoadTextureFromFile("map.jpg", &map_texture, &map_width, &map_height);
 	IM_ASSERT(ret);
-	view_width = 700;
-	view_height = 700;
 
 	ret = LoadTextureFromFile("node.png", &node_texture, &node_width, &node_height);
 	IM_ASSERT(ret);
+
+	are_textures_initialized = true;
 }
 
 void map_window::zoom_in(float aspect_ratio){
@@ -320,13 +328,51 @@ ImGui::End();
 	}
 }
 
+void map_window::render_loading_screen(){
+	long ipv4db_bytes_read;
+	long ipv6db_bytes_read;
+	geo.get_database_load_progress(ipv4db_bytes_read, ipv6db_bytes_read);
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
+	ImVec2 window_size = ImGui::GetWindowSize();
+	ImVec2 window_pos = ImGui::GetWindowPos();
+	float min_x = window_size.x/2 > 200 ? window_size.x/2 : 200;
+    ImGui::SetNextWindowSizeConstraints(ImVec2(min_x, 0), ImVec2(min_x, FLT_MAX));
+	ImVec2 center((window_size.x/2) + window_pos.x, (window_size.y/2) + window_pos.y);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+	ImGui::Begin("Loading Databases...", NULL, window_flags);
+
+	ImGui::Text("IPv4");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+	char buf[128];
+    float progress = ((float) ipv4db_bytes_read) / ((float) ipv4db_filelength);
+	sprintf(buf, "%ld/%ld", ipv4db_bytes_read, ipv4db_filelength);
+	ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+
+	ImGui::Text("IPv6");
+	ImGui::SameLine();
+	ImGui::SetNextItemWidth(-FLT_MIN);
+    progress = ((float) ipv6db_bytes_read) / ((float) ipv6db_filelength);
+	sprintf(buf, "%ld/%ld", ipv6db_bytes_read, ipv6db_filelength);
+	ImGui::ProgressBar(progress, ImVec2(0.f, 0.f), buf);
+
+	ImGui::End();
+}
+
 void map_window::render(ip_database& ip_db, unsigned int& selected_ip){
     ImGui::SetNextWindowSizeConstraints(ImVec2(500, 500), ImVec2(FLT_MAX, FLT_MAX)); // Width > 100, Height > 100
 	ImGui::Begin("Map", NULL, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-	render_background();
+	if(are_textures_initialized){
+		render_background();
 
-	std::vector<struct ip_entry> db = ip_db.get_db();
-	render_nodes(db, selected_ip);
+		std::vector<struct ip_entry> db = ip_db.get_db();
+		render_nodes(db, selected_ip);
+	}
+
+	if(!geo.is_initialized()){
+		render_loading_screen();
+	}
     
 	ImGui::End();
 }

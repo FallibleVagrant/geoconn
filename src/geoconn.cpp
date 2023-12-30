@@ -22,12 +22,13 @@ namespace geoconn{
 
 	datalinks_window datalinks_win;
 	ips_window ips_win;
-	map_window map_win;
 
 	networking_agent net_agent;
 
-	ip_database ip_db;
+	geolocation geo;
+	ip_database ip_db(geo);
 	std::vector<struct connection> active_connections;
+	map_window map_win(geo);
 
 	unsigned int selected_ip = 0;
 

@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-ip_database::ip_database(){}
+ip_database::ip_database(geolocation& g) : geo(g){}
 
 ip_database::~ip_database(){
 	//TODO: free this structure!
@@ -15,6 +15,10 @@ ip_database::~ip_database(){
 #include <arpa/inet.h>
 
 void ip_database::insert(sockaddr_storage ss){
+	//TODO: make this a queue instead.
+	if(!geo.is_initialized()){
+		return;
+	}
 	if(contains(ss)){
 		return;
 	}

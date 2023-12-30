@@ -6,7 +6,7 @@
 
 #include "debug.h"
 
-#include <unistd.h>
+#include <thread>
 
 //TODO: delete this.
 void* _get_in_addr(struct sockaddr* sa){
@@ -17,7 +17,7 @@ void* _get_in_addr(struct sockaddr* sa){
 	return &(((struct sockaddr_in6*) sa)->sin6_addr);
 }
 
-void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd){
+void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd, std::atomic<long>& num_bytes_read){
 	char line[256];
 	unsigned int i = 0;
 	while(fgets(line, sizeof(line), fd)){
@@ -27,9 +27,24 @@ void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd){
 			i++;
 			continue;
 		}
+
+		//Every 10,000 lines, update the num_bytes_read.
+		/*
+		if(i % 10000 == 0){
+		*/
+		num_bytes_read = ftell(fd);
+		/*
+		}
+		*/
+
 		//For each comma separated value.
 		unsigned int j = 0;
 		struct geo_entry entry;
+
+		//Why not use strtok()?
+		//The csv has empty values, and strtok() will skip over
+		//two delimiters as though it were one.
+		//We would like to count the number of columns, so we don't use it.
 		char* p = line;
 		char* q = p;
 		while(true){
@@ -128,7 +143,25 @@ void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd){
 	}
 }
 
+void open_ipv4_db(FILE* fdv4, std::vector<struct geo_entry>& dbv4, std::atomic<bool>& is_ipv4_initialized, std::atomic<long>& num_bytes_read){
+	read_db(AF_INET, dbv4, fdv4, num_bytes_read);
+
+	fclose(fdv4);
+
+	is_ipv4_initialized = true;
+}
+
+void open_ipv6_db(FILE* fdv6, std::vector<struct geo_entry>& dbv6, std::atomic<bool>& is_ipv6_initialized, std::atomic<long>& num_bytes_read){
+	read_db(AF_INET6, dbv6, fdv6, num_bytes_read);
+
+	fclose(fdv6);
+
+	is_ipv6_initialized = true;
+}
+
 geolocation::geolocation(){
+	//Open the files here so we can get the total_bytes before sending them to separate threads.
+
 	dbgprint("Opening GeoLite2-City-Blocks-IPv4.csv...\n");
 	FILE* fdv4 = fopen("GeoLite2-City-Blocks-IPv4.csv", "r");
 	//FILE* fdv4 = fopen("debug4.csv", "r");
@@ -137,9 +170,9 @@ geolocation::geolocation(){
 		exit(1);
 	}
 
-	read_db(AF_INET, dbv4, fdv4);
-
-	fclose(fdv4);
+	fseek(fdv4, 0L, SEEK_END);
+	total_bytes_fdv4 = ftell(fdv4);
+	fseek(fdv4, 0L, SEEK_SET);
 
 	dbgprint("Opening GeoLite2-City-Blocks-IPv6.csv...\n");
 	FILE* fdv6 = fopen("GeoLite2-City-Blocks-IPv6.csv", "r");
@@ -149,9 +182,20 @@ geolocation::geolocation(){
 		exit(1);
 	}
 
-	read_db(AF_INET6, dbv6, fdv6);
+	fseek(fdv6, 0L, SEEK_END);
+	total_bytes_fdv6 = ftell(fdv6);
+	fseek(fdv6, 0L, SEEK_SET);
 
-	fclose(fdv6);
+	//We *would* need to protect data with mutexes or something,
+	//but we don't read these until they are fully loaded into memory anyways.
+	//We use is_initialized() to indicate when they are done.
+	//
+	//Also we're only using one thread to read, which also means we don't have to protect the number of bytes read.
+	std::thread tip4(open_ipv4_db, fdv4, std::ref(dbv4), std::ref(is_ipv4_initialized), std::ref(num_bytes_read_fdv4));
+	std::thread tip6(open_ipv6_db, fdv6, std::ref(dbv6), std::ref(is_ipv6_initialized), std::ref(num_bytes_read_fdv6));
+
+	tip4.detach();
+	tip6.detach();
 }
 
 geolocation::~geolocation(){}
@@ -403,6 +447,9 @@ dbgprint("/%d.\n", entry.cidr_bits);
 }
 
 int geolocation::geolocate(sockaddr_storage ss, float* lat, float* lon){
+	if(!is_initialized()){
+		return -1;
+	}
 
 char buf[INET6_ADDRSTRLEN];
 inet_ntop(ss.ss_family, _get_in_addr((struct sockaddr*) &ss), buf, INET6_ADDRSTRLEN);
@@ -420,4 +467,20 @@ dbgprint("Geolocating this address: %s.\n", buf);
 		memcpy(&addr, &(sa->sin6_addr), sizeof(in6_addr));
 		return search(AF_INET6, dbv6, addr, lat, lon);
 	}
+}
+
+bool geolocation::is_initialized(){
+	return is_ipv4_initialized && is_ipv6_initialized;
+}
+
+void geolocation::get_database_file_lengths(long& tbfd4, long& tbfd6){
+	tbfd4 = total_bytes_fdv4;
+	tbfd6 = total_bytes_fdv6;
+	return;
+}
+
+void geolocation::get_database_load_progress(long& nbrfd4, long& nbrfd6){
+	nbrfd4 = num_bytes_read_fdv4;
+	nbrfd6 = num_bytes_read_fdv6;
+	return;
 }

@@ -207,24 +207,35 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 		int ip_ver;
 
 		for(char* bufp = strtok(buf, "\n"); bufp != NULL; bufp = strtok(NULL, "\n")){
-			if(strncmp(bufp, "START", 5) == 0){
+			if(strncmp(bufp, "CLEAR ACTIVE CONNS", 18) == 0){
 				active_connections.clear();
 				continue;
 			}
 
-			int r = sscanf(bufp, "%d %64s %64s\n", &ip_ver, src_addr, dst_addr);
-			if(r != 3){
+			int r = sscanf(bufp, "%64s %64s\n", src_addr, dst_addr);
+			if(r != 2){
 				dbgprint("[NET_AGENT] Received an ill-formed IP. Skipping...\n");
 				continue;
 			}
 
-			if(ip_ver == 4){
-				ip_ver = AF_INET;
+			//Detect IP version. Validation will be done by inet_pton().
+			//Only need to read the first few bytes.
+			int size = 5;
+			ip_ver = -1;
+			for(int i = 0; i < size; i++){
+				if(src_addr[i] == '.'){
+					//Found a '.' first, must be IPv4.
+					ip_ver = AF_INET;
+					break;
+				}
+				if(src_addr[i] == ':'){
+					//Found a ':' first, must be IPv6.
+					ip_ver = AF_INET6;
+					break;
+				}
 			}
-			else if(ip_ver == 6){
-				ip_ver = AF_INET6;
-			}
-			else{
+
+			if(ip_ver == -1){
 				dbgprint("[NET_AGENT] IP version unrecognized. Skipping...\n");
 				continue;
 			}

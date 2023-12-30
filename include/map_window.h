@@ -14,12 +14,13 @@
 
 #include <vector>
 #include "ip_database.h"
+#include <atomic>
 
 struct coordinates;
 
 class map_window{
 	public:
-		map_window();
+		map_window(geolocation& geo);
 		~map_window();
 
 		void init();
@@ -42,6 +43,14 @@ class map_window{
 		void render_background();
 		ImVec2 coords_to_equirectangular(struct coordinates coord);
 		void render_nodes(std::vector<struct ip_entry>& db, unsigned int& selected_ip);
+
+		void render_loading_screen();
+
+		geolocation& geo;
+		long ipv4db_filelength;
+		long ipv6db_filelength;
+
+		std::atomic<bool> are_textures_initialized;
 };
 
 #endif

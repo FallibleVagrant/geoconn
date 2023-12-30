@@ -15,7 +15,7 @@ struct ip_entry{
 
 class ip_database{
 	public:
-		ip_database();
+		ip_database(geolocation& geo);
 		~ip_database();
 
 		void insert(sockaddr_storage ss);
@@ -25,7 +25,7 @@ class ip_database{
 		//This probably shouldn't be an array.
 		std::vector<struct ip_entry> db;
 
-		geolocation geo;
+		geolocation& geo;
 };
 
 #endif
