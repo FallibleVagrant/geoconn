@@ -201,6 +201,9 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 
 		buf[BUFLEN - 1] = '\0';
 		dbgprint("[NET_AGENT] Received a message!\n");
+		dbgprint("It is: %s.\n", buf);
+		dbgprint("BUFLEN: %u.\n", BUFLEN);
+		dbgprint("strlen(buf): %lu.\n", strlen(buf));
 
 		char src_addr[INET6_ADDRSTRLEN];
 		char dst_addr[INET6_ADDRSTRLEN];
@@ -220,9 +223,8 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 
 			//Detect IP version. Validation will be done by inet_pton().
 			//Only need to read the first few bytes.
-			int size = 5;
 			ip_ver = -1;
-			for(int i = 0; i < size; i++){
+			for(int i = 0; i < 5; i++){
 				if(src_addr[i] == '.'){
 					//Found a '.' first, must be IPv4.
 					ip_ver = AF_INET;

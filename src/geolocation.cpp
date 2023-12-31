@@ -28,14 +28,8 @@ void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd, std::atomic<lo
 			continue;
 		}
 
-		//Every 10,000 lines, update the num_bytes_read.
-		/*
-		if(i % 10000 == 0){
-		*/
+		//Update the num_bytes_read.
 		num_bytes_read = ftell(fd);
-		/*
-		}
-		*/
 
 		//For each comma separated value.
 		unsigned int j = 0;
@@ -137,9 +131,9 @@ void read_db(int AF, std::vector<struct geo_entry>& db, FILE* fd, std::atomic<lo
 			}
 
 			j++;
-			db.push_back(entry);
 		}
 		i++;
+		db.push_back(entry);
 	}
 }
 
@@ -324,76 +318,6 @@ dbgprint("/%d.\n", cidr_bits);
 	}
 }
 
-/* You don't actually have to do any of this. The starting addr of the range is ALWAYS the addr listed in the db.
-in6_addr get_start_of_range(int AF, in6_addr range_addr, int cidr_bits){
-	uint32_t subnet_mask[4];
-	uint32_t range_addr_uint[4];
-
-	memset(subnet_mask, 0, 16);
-
-//dbgprint("Getting the starting addr of ");
-//dbgprint_addr(AF, range_addr);
-//dbgprint("/%d.\n", cidr_bits);
-
-	//Set range_addr_uint to range_addr, except in host order.
-	for(int i = 0; i < 4; i++){
-		uint32_t network_order_chunk;
-		memcpy(&network_order_chunk, (&range_addr) + (4*i), 4);
-
-		range_addr_uint[i] = ntohl(network_order_chunk);
-	}
-
-//dbgprint("Creating the subnet_mask.\n");
-	//Create the subnet_mask.
-	for(int i = 0; i < 4; i++){
-		if(cidr_bits == 0){
-			break;
-		}
-		if(cidr_bits >= 32){
-			//Set to all ones.
-			memset(&(subnet_mask[i]), 128, 4);
-			cidr_bits -= 32;
-			continue;
-		}
-		
-		for(int bit_shift = 31; bit_shift >= 0; bit_shift--){
-			if(cidr_bits == 0){
-				break;
-			}
-			subnet_mask[i] |= 1 << bit_shift;
-			cidr_bits--;
-		}
-//dbgprint("subnet_mask at index %d is: %08X.\n", i, subnet_mask[i]);
-	}
-
-	//Create the first addr in subnet.
-	uint32_t starting_addr[4];
-	for(int i = 0; i < 4; i++){
-		if(subnet_mask[i] == 0){
-			starting_addr[i] = 0;
-			continue;
-		}
-		starting_addr[i] = range_addr_uint[i] & subnet_mask[i];
-//dbgprint("range_addr_uint at index %d is: %08X.\n", i, range_addr_uint[i]);
-	}
-
-	//Must set to network byte order.
-	in6_addr out;
-	for(int i = 0; i < 4; i++){
-		uint32_t network_order_chunk = htonl(starting_addr[i]);
-
-		memcpy((&out) + (4*i), &network_order_chunk, 4);
-	}
-
-
-dbgprint("Starting addr is: ");
-dbgprint_addr(AF, out);
-dbgprint("\n");
-
-	return out;
-}
-*/
-
 int addrcmp(int AF, in6_addr addr1, in6_addr addr2){
 	if(AF == AF_INET){
 		return memcmp(&addr1, &addr2, sizeof(in_addr));
@@ -410,6 +334,13 @@ int search(int AF, std::vector<struct geo_entry> db, in6_addr addr, float* lat, 
 	dbgprint("Searching through the database...\n");
 	unsigned int min = 0;
 	unsigned int max = db.size() - 1;
+
+	dbgprint("The first 10 entries are:\n");
+	for(unsigned int i = 0; i < 10; i++){
+dbgprint_addr(AF, db[i].range_addr);
+dbgprint("/%d.\n", db[i].cidr_bits);
+	}
+	dbgprint("size of AF == AF_INET %d db is: %lu", AF == AF_INET, db.size());
 
 	while(min <= max){
 		unsigned int mid = (max + min) / 2;
@@ -428,16 +359,33 @@ dbgprint("/%d.\n", entry.cidr_bits);
 			return 1;
 		}
 		else{
-//dbgprint("IP isn't in range.\n");
+dbgprint("Hopped to: ");
+dbgprint_addr(AF, entry.range_addr);
+dbgprint("/%d", entry.cidr_bits);
 		}
 
 		//start_of_range_addr is ALWAYS the range_addr listed in the db.
 		//in6_addr start_of_range_addr = get_start_of_range(AF, entry.range_addr, entry.cidr_bits);
 		if(addrcmp(AF, addr, entry.range_addr) < 0){
 //dbgprint("addr is less than start_of_range_addr\n");
+dbgprint("max is: %u\nmid is: %u\nmin is: %u\n", max, mid, min);
+			//Prevent segfault.
+			if(mid == 0){
+				return 0;
+			}
 			max = mid - 1;
+dbgprint(", and ");
+dbgprint_addr(AF, addr);
+dbgprint(" was less than ");
+dbgprint_addr(AF, entry.range_addr);
+dbgprint("/%d.\n", entry.cidr_bits);
 		}
 		else{
+dbgprint(", and ");
+dbgprint_addr(AF, addr);
+dbgprint(" was greater than or equal to ");
+dbgprint_addr(AF, entry.range_addr);
+dbgprint("/%d.\n", entry.cidr_bits);
 //dbgprint("addr is >= start_of_range_addr\n");
 			min = mid + 1;
 		}

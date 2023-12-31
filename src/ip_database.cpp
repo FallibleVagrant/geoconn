@@ -19,9 +19,6 @@ void ip_database::insert(sockaddr_storage ss){
 	if(!geo.is_initialized()){
 		return;
 	}
-	if(contains(ss)){
-		return;
-	}
 	//Check for 0.0.0.0 and 127.0.0.1.
 	if(ss.ss_family == AF_INET){
 		if(((struct sockaddr_in*) &ss)->sin_addr.s_addr == htonl(INADDR_LOOPBACK)
@@ -37,6 +34,10 @@ void ip_database::insert(sockaddr_storage ss){
 			|| memcmp(&(((struct sockaddr_in6*) &ss)->sin6_addr), &in6addr_any, sizeof(struct in6_addr)) == 0){
 			return;
 		}
+	}
+
+	if(contains(ss)){
+		return;
 	}
 
 	struct ip_entry ipe;

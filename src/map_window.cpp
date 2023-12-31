@@ -4,6 +4,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <thread>
+
 map_window::map_window(geolocation& g) : geo(g){
 	geo.get_database_file_lengths(ipv4db_filelength, ipv6db_filelength);
 	view_width = 700;
@@ -43,8 +45,8 @@ bool LoadTextureFromFile(const char* filename, GLuint* out_texture, int* out_wid
     return true;
 }
 
-void init_textures(float& map_texture, float& map_width){
-
+void init_textures(std::atomic<bool>& are_textures_initialized, GLuint* map_texture, int* map_width, int* map_height, GLuint* node_texture, int* node_width, int* node_height){
+	
 }
 
 void map_window::init(){
