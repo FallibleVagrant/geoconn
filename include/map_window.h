@@ -35,9 +35,13 @@ class map_window{
 		void zoom_in(float aspect_ratio);
 		void zoom_out(float aspect_ratio);
 
+		void scroll_up_by_y(float y);
 		void scroll_up(float aspect_ratio);
+		void scroll_right_by_x(float x);
 		void scroll_right(float aspect_ratio);
+		void scroll_down_by_y(float y);
 		void scroll_down(float aspect_ratio);
+		void scroll_left_by_x(float x);
 		void scroll_left(float aspect_ratio);
 
 		void render_background();

@@ -91,15 +91,12 @@ void map_window::zoom_out(float aspect_ratio){
 	}
 }
 
-void map_window::scroll_up(float aspect_ratio){
-	const float SCROLL_AMOUNT_X = (map_width / 24) * (view_width / map_width);
-	const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
-
-	if(view_y >= SCROLL_AMOUNT_Y){
-		view_y -= SCROLL_AMOUNT_Y;
+void map_window::scroll_up_by_y(float y){
+	if(view_y >= y){
+		view_y -= y;
 	}
 	else{
-		//Snap to 0 if SCROLL_AMOUNT_Y will go under,
+		//Snap to 0 if y will go under,
 		//but only if view isn't large enough to go into negative view_y.
 		if(view_height <= map_height){
 			view_y = 0;
@@ -107,12 +104,16 @@ void map_window::scroll_up(float aspect_ratio){
 	}
 }
 
-void map_window::scroll_right(float aspect_ratio){
+void map_window::scroll_up(float aspect_ratio){
 	const float SCROLL_AMOUNT_X = (map_width / 24) * (view_width / map_width);
-	//const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
+	const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
 
-	if(view_x + SCROLL_AMOUNT_X < map_width - view_width){
-		view_x += SCROLL_AMOUNT_X;
+	scroll_up_by_y(SCROLL_AMOUNT_Y);
+}
+
+void map_window::scroll_right_by_x(float x){
+	if(view_x + x < map_width - view_width){
+		view_x += x;
 	}
 	else{
 		//Snap to max view_x.
@@ -120,15 +121,19 @@ void map_window::scroll_right(float aspect_ratio){
 	}
 }
 
-void map_window::scroll_down(float aspect_ratio){
+void map_window::scroll_right(float aspect_ratio){
 	const float SCROLL_AMOUNT_X = (map_width / 24) * (view_width / map_width);
-	const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
+	//const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
 
-	if(view_y + SCROLL_AMOUNT_Y < map_height - view_height){
-		view_y += SCROLL_AMOUNT_Y;
+	scroll_right_by_x(SCROLL_AMOUNT_X);
+}
+
+void map_window::scroll_down_by_y(float y){
+	if(view_y + y < map_height - view_height){
+		view_y += y;
 	}
 	else{
-		//Snap to maximum view_y if SCROLL_AMOUNT_Y will go over,
+		//Snap to maximum view_y if y will go over,
 		//but only if view isn't large enough to go into negative view_y.
 		if(view_height <= map_height){
 			view_y = map_height - view_height;
@@ -136,17 +141,28 @@ void map_window::scroll_down(float aspect_ratio){
 	}
 }
 
-void map_window::scroll_left(float aspect_ratio){
+void map_window::scroll_down(float aspect_ratio){
 	const float SCROLL_AMOUNT_X = (map_width / 24) * (view_width / map_width);
-	//const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
+	const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
 
-	if(view_x >= SCROLL_AMOUNT_X){
-		view_x -= SCROLL_AMOUNT_X;
+	scroll_down_by_y(SCROLL_AMOUNT_Y);
+}
+
+void map_window::scroll_left_by_x(float x){
+	if(view_x >= x){
+		view_x -= x;
 	}
 	else{
 		//Snap to 0.
 		view_x = 0;
 	}
+}
+
+void map_window::scroll_left(float aspect_ratio){
+	const float SCROLL_AMOUNT_X = (map_width / 24) * (view_width / map_width);
+	//const float SCROLL_AMOUNT_Y = (1 / aspect_ratio) * SCROLL_AMOUNT_X;
+
+	scroll_left_by_x(SCROLL_AMOUNT_X);
 }
 
 void map_window::render_background(){
@@ -163,6 +179,33 @@ void map_window::render_background(){
 		}
 	}
 
+	//Mouse controls.
+	if(ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows)){
+		if(ImGui::IsKeyDown(ImGuiKey_MouseRight)){
+			if(io.MouseDelta.y < 0){
+				zoom_out(-1 * io.MouseDelta.y);
+			}
+			if(io.MouseDelta.y > 0){
+				zoom_in(io.MouseDelta.y);
+			}
+		}
+		if(ImGui::IsKeyDown(ImGuiKey_MouseLeft)){
+			if(io.MouseDelta.x < 0){
+				scroll_right_by_x((-1 * io.MouseDelta.x / window_size.x) * view_width);
+			}
+			if(io.MouseDelta.x > 0){
+				scroll_left_by_x((io.MouseDelta.x / window_size.x) * view_width);
+			}
+			if(io.MouseDelta.y < 0){
+				scroll_down_by_y((-1 * io.MouseDelta.y / window_size.y) * view_height);
+			}
+			if(io.MouseDelta.y > 0){
+				scroll_up_by_y((io.MouseDelta.y / window_size.y) * view_height);
+			}
+		}
+	}
+
+	//Scroll controls.
 	if(ImGui::IsWindowHovered(ImGuiHoveredFlags_ChildWindows)){
 		if(io.MouseWheel > 0){
 			if(ImGui::IsKeyDown(ImGuiKey_LeftCtrl)){
@@ -204,9 +247,10 @@ void map_window::render_background(){
 		view_y = map_height - view_height;
 	}
 
-	ImGui::Begin("test");
+	ImGui::Begin("Debug");
 	ImGui::Text("view_x: %f\nview_y: %f\nview_width: %f\nview_height: %f", view_x, view_y, view_width, view_height);
 	ImGui::Text("size: %dx%d", map_width, map_height);
+	ImGui::Text("Mouse Delta: x:%f y:%f", io.MouseDelta.x, io.MouseDelta.y);
 	ImGui::End();
 
 	ImVec2 uv0 = ImVec2(view_x / map_width, view_y / map_height);
