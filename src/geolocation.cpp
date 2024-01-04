@@ -335,13 +335,6 @@ int search(int AF, std::vector<struct geo_entry> db, in6_addr addr, float* lat, 
 	unsigned int min = 0;
 	unsigned int max = db.size() - 1;
 
-	dbgprint("The first 10 entries are:\n");
-	for(unsigned int i = 0; i < 10; i++){
-dbgprint_addr(AF, db[i].range_addr);
-dbgprint("/%d.\n", db[i].cidr_bits);
-	}
-	dbgprint("size of AF == AF_INET %d db is: %lu", AF == AF_INET, db.size());
-
 	while(min <= max){
 		unsigned int mid = (max + min) / 2;
 		struct geo_entry entry;
@@ -359,34 +352,21 @@ dbgprint("/%d.\n", entry.cidr_bits);
 			return 1;
 		}
 		else{
-dbgprint("Hopped to: ");
-dbgprint_addr(AF, entry.range_addr);
-dbgprint("/%d", entry.cidr_bits);
+//dbgprint("Hopped to: ");
+//dbgprint_addr(AF, entry.range_addr);
+//dbgprint("/%d", entry.cidr_bits);
 		}
 
 		//start_of_range_addr is ALWAYS the range_addr listed in the db.
 		//in6_addr start_of_range_addr = get_start_of_range(AF, entry.range_addr, entry.cidr_bits);
 		if(addrcmp(AF, addr, entry.range_addr) < 0){
-//dbgprint("addr is less than start_of_range_addr\n");
-dbgprint("max is: %u\nmid is: %u\nmin is: %u\n", max, mid, min);
 			//Prevent segfault.
 			if(mid == 0){
 				return 0;
 			}
 			max = mid - 1;
-dbgprint(", and ");
-dbgprint_addr(AF, addr);
-dbgprint(" was less than ");
-dbgprint_addr(AF, entry.range_addr);
-dbgprint("/%d.\n", entry.cidr_bits);
 		}
 		else{
-dbgprint(", and ");
-dbgprint_addr(AF, addr);
-dbgprint(" was greater than or equal to ");
-dbgprint_addr(AF, entry.range_addr);
-dbgprint("/%d.\n", entry.cidr_bits);
-//dbgprint("addr is >= start_of_range_addr\n");
 			min = mid + 1;
 		}
 	}

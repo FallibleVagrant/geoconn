@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 
-ip_database::ip_database(geolocation& g) : geo(g){}
+ip_database::ip_database(geolocation& g) : geo(g){
+	tpool.start();
+}
 
 ip_database::~ip_database(){
 	//TODO: free this structure!
@@ -15,10 +17,6 @@ ip_database::~ip_database(){
 #include <arpa/inet.h>
 
 void ip_database::insert(sockaddr_storage ss){
-	//TODO: make this a queue instead.
-	if(!geo.is_initialized()){
-		return;
-	}
 	//Check for 0.0.0.0 and 127.0.0.1.
 	if(ss.ss_family == AF_INET){
 		if(((struct sockaddr_in*) &ss)->sin_addr.s_addr == htonl(INADDR_LOOPBACK)
@@ -36,27 +34,40 @@ void ip_database::insert(sockaddr_storage ss){
 		}
 	}
 
+	if(!geo.is_initialized()){
+		//Don't care about duplicates.
+		processing_queue.push(ss);
+		return;
+	}
+
 	if(contains(ss)){
 		return;
 	}
 
-	struct ip_entry ipe;
-	ipe.ss = ss;
-	ipe.lat = 0;
-	ipe.lon = 0;
+	tpool.add_job([this, ss] {
+		struct ip_entry ipe;
+		ipe.ss = ss;
+		ipe.lat = 0;
+		ipe.lon = 0;
 
-	int r = geo.geolocate(ss, &(ipe.lat), &(ipe.lon));
-	if(r == 0){
-		dbgprint("Could not resolve addr.\n");
-	}
+		int r = geo.geolocate(ipe.ss, &(ipe.lat), &(ipe.lon));
+		if(r == 0){
+			dbgprint("Could not resolve addr.\n");
+		}
 
-	db.push_back(ipe);
+		{
+			std::unique_lock<std::mutex> lock(db_mutex);
+			db.push_back(ipe);
+		}
+	});
 }
 
 #include <netdb.h>
 #include <string.h>
 
 bool ip_database::contains(sockaddr_storage ss){
+	std::unique_lock<std::mutex> lock(db_mutex);
+
 	for(struct ip_entry ipe : db){
 		sockaddr_storage dbss = ipe.ss;
 		if(dbss.ss_family != ss.ss_family){
@@ -83,5 +94,24 @@ bool ip_database::contains(sockaddr_storage ss){
 }
 
 std::vector<struct ip_entry> ip_database::get_db(){
-	return db;
+	//Since this function is called every frame to enumerate and render nodes,
+	//we use it to transparently empty the queue.
+	if(geo.is_initialized()){
+		if(!processing_queue.empty()){
+			sockaddr_storage ss;
+			ss = processing_queue.front();
+			processing_queue.pop();
+			insert(ss);
+		}
+	}
+
+	{
+		std::unique_lock<std::mutex> lock(db_mutex);
+		std::vector<struct ip_entry> new_db(db);
+		return new_db;
+	}
+}
+
+std::queue<sockaddr_storage> ip_database::get_processing_queue(){
+	return processing_queue;
 }

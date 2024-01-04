@@ -216,7 +216,8 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 			}
 
 			int r = sscanf(bufp, "%64s %64s\n", src_addr, dst_addr);
-			if(r != 2){
+
+			if(r >= 3){
 				dbgprint("[NET_AGENT] Received an ill-formed IP. Skipping...\n");
 				continue;
 			}
@@ -253,22 +254,29 @@ int networking_agent::check_for_messages(ip_database& ip_db, std::vector<struct 
 
 			ip_db.insert(src_ss);
 
-			//Put dst_addr in the IP database.
-			sockaddr_storage dst_ss;
-			dst_ss.ss_family = ip_ver;
-			r = inet_pton(ip_ver, dst_addr, get_in_addr((struct sockaddr*)&dst_ss));
-			if(r != 1){
-				dbgprint("[NET_AGENT] Could not convert dst_addr to bits.\n");
+			//Wait, it's only one IP? Don't need to do anything else, continue.
+			if(r == 1){
 				continue;
 			}
+			//Two IPs. Add the second one to db and mark it in active_connections.
+			else if(r == 2){
+				//Put dst_addr in the IP database.
+				sockaddr_storage dst_ss;
+				dst_ss.ss_family = ip_ver;
+				r = inet_pton(ip_ver, dst_addr, get_in_addr((struct sockaddr*)&dst_ss));
+				if(r != 1){
+					dbgprint("[NET_AGENT] Could not convert dst_addr to bits.\n");
+					continue;
+				}
 
-			ip_db.insert(dst_ss);
+				ip_db.insert(dst_ss);
 
-			//Since we just received this connection, it must be active.
-			struct connection conn;
-			conn.src = src_ss;
-			conn.dst = dst_ss;
-			active_connections.push_back(conn);
+				//Since we just received this connection, it must be active.
+				struct connection conn;
+				conn.src = src_ss;
+				conn.dst = dst_ss;
+				active_connections.push_back(conn);
+			}
 		}
 	}
 

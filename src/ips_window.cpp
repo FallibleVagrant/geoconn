@@ -25,6 +25,8 @@ void ips_window::render(ip_database& ip_db, unsigned int& selected_ip){
 
 	ImGui::Begin("IPs");
 
+ImGui::Text("Queue has: %ld", ip_db.get_processing_queue().size());
+
 	ImGui::BeginChild("left pane", ImVec2(150, 0), true);
 	for(unsigned int i = 0; i < db.size(); i++){
 		// FIXME: Good candidate to use ImGuiSelectableFlags_SelectOnNav
