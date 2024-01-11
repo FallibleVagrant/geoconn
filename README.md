@@ -17,6 +17,8 @@ nc localhost 40343 < ips.csv
 
 You can also request IPs from a running [connwatch](https://github.com/FallibleVagrant/connwatch) instance.
 
+The map jpgs are sourced from NASA, although I found these particular ones after digging through Reddit's community of map enthusiasts.
+
 ## Dependencies
 This project uses Dear ImGui, which you can find here:
 [https://github.com/ocornut/imgui](https://github.com/ocornut/imgui)
