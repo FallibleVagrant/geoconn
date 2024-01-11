@@ -24,6 +24,11 @@ This project uses Dear ImGui, which you can find here:
 [https://github.com/ocornut/imgui](https://github.com/ocornut/imgui)
 It is already included in the project files.
 
+We also use stb_image.h to read jpg files.
+It is already included in the project files,
+but you may find it here as well:
+[https://github.com/nothings/stb](https://github.com/nothings/stb)
+
 You should also have the SDL2 development files installed.
 
 ## Build from Source
