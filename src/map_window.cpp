@@ -356,7 +356,8 @@ ImGui::End();
 			//ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoMove;
 			ImGui::SetCursorScreenPos(window_pos);
 			ImGui::PushID(i);
-			ImGui::BeginChild("Node", ImVec2(-FLT_MIN, 0.0f), ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+			ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+			ImGui::BeginChild("Node", ImVec2(-FLT_MIN, 0.0f), window_flags);
 			if(ImGui::IsWindowHovered()){
 				selected_ip = i;
 			}
