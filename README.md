@@ -1,5 +1,7 @@
 # geoconn
 
+![demo](./demo.gif)
+
 > [!WARNING]
 > This is an unfinished hobby project, subject to being abandoned on a whim.
 
@@ -9,7 +11,7 @@ This is like that, except it tracks network activity from your personal computer
 Currently, it merely does geolocation on IP addresses you give it and places a dot on the world map.
 Not much else.
 
-It listens on localhost:40343 for TCP connections containing IP addresses.
+It listens on localhost:40343 for TCP connections containing IP addresses, specifically IPv6.
 I.e. netcatting a list of IPs is presently the best way of inputting them.
 ```
 nc localhost 40343 < ips.csv
@@ -38,8 +40,6 @@ You need to have the SDL2 development files in order to `make` this project.
 ```
 sudo apt-get install libsdl2-dev
 ```
-(You may need more dev files from the sdl2 family of packages, TODO: test build process lol.)
-
 Then, simply call:
 ```
 make
