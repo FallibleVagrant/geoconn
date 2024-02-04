@@ -5,8 +5,8 @@
 > [!WARNING]
 > This is an unfinished hobby project, subject to being abandoned on a whim.
 
-You remember, the world maps upon the large screens of mission control, or the NOC, or in the headquarters of the Very Serious Organization in every spy movie.
-This is like that, except it tracks network activity from your personal computer.
+Inspired by the Hollywood depiction of various world maps in places like NASA mission control or token evil organizations,
+this is an attack map for the personal computer.
 
 Currently, it merely does geolocation on IP addresses you give it and places a dot on the world map.
 Not much else.
@@ -22,16 +22,11 @@ You can also request IPs from a running [connwatch](https://github.com/FallibleV
 The map jpgs are sourced from NASA, although I found these particular ones after digging through Reddit's community of map enthusiasts.
 
 ## Dependencies
-This project uses Dear ImGui, which you can find here:
+This project uses Dear ImGui and stb_image.h, both of which are already included in the project files.
 [https://github.com/ocornut/imgui](https://github.com/ocornut/imgui)
-It is already included in the project files.
-
-We also use stb_image.h to read jpg files.
-It is already included in the project files,
-but you may find it here as well:
 [https://github.com/nothings/stb](https://github.com/nothings/stb)
 
-You should also have the SDL2 development files installed.
+Building requires the SDL2 development files.
 
 ## Build from Source
 
