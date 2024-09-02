@@ -11,7 +11,7 @@ this is an attack map for the personal computer.
 Currently, it merely does geolocation on IP addresses you give it and places a dot on the world map.
 Not much else.
 
-It listens on localhost:40343 for TCP connections containing IP addresses, specifically IPv6.
+It listens on localhost:40343 for IPv6 TCP connections streaming IP addresses.
 I.e. netcatting a list of IPs is presently the best way of inputting them.
 ```
 nc localhost 40343 < ips.csv
